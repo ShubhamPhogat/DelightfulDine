@@ -8,17 +8,7 @@ import { useDispatch } from "react-redux";
 
 const OrderData = ({ index, data, admin }) => {
   const dispatch = useDispatch();
-  const handleClick = (order_id, sts) => {
-    if (order_id === process.env.ADMIN_ID) {
-      updateOrederSts(order_id, sts).then((res) => {
-        getAllOrders().then((data) => {
-          dispatch(setOrders(data));
-        });
-      });
-    } else {
-      return;
-    }
-  };
+  const handleClick = (order_id, sts) => {};
   return (
     <motion.div
       key={index}
@@ -30,10 +20,12 @@ const OrderData = ({ index, data, admin }) => {
         <div className="flex items-center gap-4">
           <p className="flex items-center gap-1 text-textColor">
             Total :<HiCurrencyRupee className="text-lg text-red-500" />{" "}
-            <span className="text-headingColor font-bold">{data?.total} </span>
+            <span className="text-headingColor font-bold">
+              {data?.orderTotal}{" "}
+            </span>
           </p>
           <p className="px-2 py-[2px] text-sm text-headingColor font-semibold capitalize rounded-md bg-emerald-400 drop-shadow-md ">
-            {data?.status}
+            {data?.orderStatus}
           </p>
           <p
             className={`text-base font-semibold capitalize border border-gray-300 px-2 py-[2px] rounded-md ${
@@ -46,10 +38,8 @@ const OrderData = ({ index, data, admin }) => {
           </p>
           {admin && (
             <div className="flex items-center justify-center gap-2 ">
-              <p className="text-lg font-semibold text-headingColor">Mark As</p>
               <motion.p
                 {...buttonClick}
-                onClick={() => handleClick(data.orderId, "preparing")}
                 className={`text-orange-500 text-base font-semibold capitalize border border-gray-300 px-2 py-[2px] rounded-md cursor-pointer `}
               >
                 Preparing
@@ -74,24 +64,19 @@ const OrderData = ({ index, data, admin }) => {
       </div>
       <div className="flex items-center justify-start flex-wrap w-full">
         <div className="flex items-center justify-center gap-4">
-          {data?.items &&
-            data.items.map((item, j) => (
+          {data?.orderItems &&
+            data.orderItems.map((item, j) => (
               <motion.div
                 {...staggerFadeInOut(j)}
                 key={j}
                 className="flex items-center justify-center gap-1"
               >
-                <img src={item.imageURL} className="w-10 h-10 object-contain" />
+                <img
+                  src={item.productId.productImage}
+                  className="w-10 h-10 object-contain"
+                />
               </motion.div>
             ))}
-        </div>
-        <div className="flex items-start justify-start flex-col gap-2 px-6 ml-auto w-full md:w-460">
-          <h1 className="text-lg text-headingColor font-semibold">
-            {data.customer.name}
-          </h1>
-          <p className="text-base text-headingColor -mt-2">
-            {data.customer.email} {data.orderId}
-          </p>
         </div>
       </div>
     </motion.div>

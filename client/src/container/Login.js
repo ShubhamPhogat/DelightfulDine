@@ -18,11 +18,19 @@ import { app } from "../config/firebase.config";
 import { validateUserJwtToken } from "../api";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserDetails } from "../context/actions/userAction";
-import { alertInfo, alertWarning } from "../context/actions/alertActions";
+import {
+  alertInfo,
+  alertSuccess,
+  alertWarning,
+} from "../context/actions/alertActions";
 import { BsDisplay } from "react-icons/bs";
+import axios from "axios";
 const Login = () => {
   const [useremail, setuserEmail] = useState("");
   const [userPassword, setuserPasssword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [userName, setuserName] = useState("");
   const [userConfirmPassword, setuserConfirmPasssword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -41,41 +49,80 @@ const Login = () => {
 
   const signInWithGoogle = async () => {
     console.log("clicked");
-    await signInWithPopup(firebaseAuth, provider).then((userCard) => {
-      firebaseAuth.onAuthStateChanged((cred) => {
-        if (cred) {
-          cred.getIdToken().then((token) => {
-            validateUserJwtToken(token).then((data) => {
-              dispatch(setUserDetails(data));
-            });
+    // await signInWithPopup(firebaseAuth, provider).then((userCard) => {
+    //   firebaseAuth.onAuthStateChanged((cred) => {
+    //     if (cred) {
+    //       cred.getIdToken().then((token) => {
+    //         validateUserJwtToken(token).then((data) => {
+    //           dispatch(setUserDetails(data));
+    //         });
+    //       });
+    //     }
+    //   });
+    // });
+    // import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+
+    const auth = getAuth();
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        const user = result.user;
+        console.log(token);
+        console.log(user);
+        if (token) {
+          validateUserJwtToken(token).then((data) => {
+            dispatch(setUserDetails(user));
           });
         }
+
+        // The signed-in user info.
+
+        // IdP data available using getAdditionalUserInfo(result)
+
+        // ...
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        // ...
       });
-    });
   };
   const signUpWithEmailPass = async () => {
     console.log("cliclked");
-    if (useremail === "" || userPassword === "" || userConfirmPassword === "") {
+    if (
+      useremail === "" ||
+      userPassword === "" ||
+      userConfirmPassword === "" ||
+      userName === "" ||
+      phone === ""
+    ) {
       dispatch(alertInfo("Rquired fields should no be empty"));
     } else {
       if (userPassword === userConfirmPassword) {
-        await createUserWithEmailAndPassword(
-          firebaseAuth,
-          useremail,
-          userPassword
-        ).then((userCred) => {
-          firebaseAuth.onAuthStateChanged((cred) => {
-            if (cred) {
-              cred.getIdToken().then((token) => {
-                validateUserJwtToken(token).then((data) => {
-                  console.log(data);
-                  dispatch(setUserDetails(data));
-                });
-                navigate("/", { replace: true });
-              });
-            }
-          });
-        });
+        const response = await axios.post(
+          `http://localhost:8000/api/users/register`,
+          {
+            userName,
+            password: userPassword,
+            email: useremail,
+            firstName,
+            phone,
+          }
+        );
+        if (response) {
+          dispatch(
+            alertSuccess(
+              "Account created successfully ! please continue signing in"
+            )
+          );
+        }
       } else {
         dispatch(alertWarning("Password doesn't match"));
       }
@@ -83,23 +130,19 @@ const Login = () => {
   };
   const signInWithEmailPass = async () => {
     if (useremail !== "" && userPassword !== "") {
-      await signInWithEmailAndPassword(
-        firebaseAuth,
-        useremail,
-        userPassword
-      ).then((userCred) => {
-        firebaseAuth.onAuthStateChanged((cred) => {
-          if (cred) {
-            cred.getIdToken().then((token) => {
-              validateUserJwtToken(token).then((data) => {
-                console.log(data);
-                dispatch(setUserDetails(data));
-              });
-              navigate("/", { replace: true });
-            });
-          }
-        });
-      });
+      try {
+        const response = await axios.post(
+          `http://localhost:8000/api/users/login`,
+          { email: useremail, password: userPassword }
+        );
+        if (response) {
+          console.log("his is user", response.data.data.validateUser);
+          dispatch(setUserDetails(response.data.data.validateUser));
+          navigate("/", { replace: true });
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
@@ -150,6 +193,31 @@ const Login = () => {
               inputStateFunction={setuserConfirmPasssword}
               type="password"
               icons={<FaLock className="text-xl text-textColor" />}
+            />
+          )}
+
+          {isSignUp && (
+            <LoginInput
+              placeholder={`userName`}
+              inputState={userName}
+              inputStateFunction={setuserName}
+              type="text"
+            />
+          )}
+          {isSignUp && (
+            <LoginInput
+              placeholder={`phone`}
+              inputState={phone}
+              inputStateFunction={setPhone}
+              type="text"
+            />
+          )}
+          {isSignUp && (
+            <LoginInput
+              placeholder={`Name`}
+              inputState={firstName}
+              inputStateFunction={setFirstName}
+              type="text"
             />
           )}
           {!isSignUp ? (

@@ -58,16 +58,6 @@ const DbLeftSection = () => {
         >
           Add New Item
         </NavLink>
-        <NavLink
-          to={"/dashboard/AllUsers"}
-          className={({ isActive }) =>
-            isActive
-              ? `${isActiveStyles} px-4 py-2 border-l-8 border-red-500`
-              : `${isNotActiveStyles}`
-          }
-        >
-          All users
-        </NavLink>
       </ul>
 
       <div className=" w-full bg-red-500 flex flex-col justify-center items-center h-225 mt-auto px-2 absolute bottom-0 left-0">

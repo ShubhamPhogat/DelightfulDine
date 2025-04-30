@@ -1,6 +1,5 @@
 import axios from "axios";
-export const baseURL =
-  "http://127.0.0.1:5001/restaurant-app-ee8c7/us-central1/app";
+export const baseURL = "https://delight-full-dine-backend-tuum.vercel.app";
 export const validateUserJwtToken = async (token) => {
   try {
     const res = await axios.get(`${baseURL}/api/user/jwtVerification`, {
@@ -14,7 +13,7 @@ export const validateUserJwtToken = async (token) => {
 
 export const addNewProduct = async (data) => {
   try {
-    const res = await axios.post(`${baseURL}/api/products/create`, { ...data });
+    const res = await axios.post(`${baseURL}/api/product/create`, data);
     console.log(res.data);
     return res.data.data;
   } catch (error) {
@@ -25,9 +24,9 @@ export const addNewProduct = async (data) => {
 
 export const getAllProduct = async () => {
   try {
-    const res = await axios.get(`${baseURL}/api/products/all`);
-    console.log(res);
-    return res.data.data;
+    const res = await axios.get(`${baseURL}/api/product/all`);
+    console.log("products fetched", res.data.allProducts);
+    return res.data.allProducts;
   } catch (error) {
     return null;
   }
@@ -35,7 +34,7 @@ export const getAllProduct = async () => {
 export const deleteAProduct = async (productId) => {
   try {
     const res = await axios.delete(
-      `${baseURL}/api/products/delete/${productId}`
+      `${baseURL}/api/product/delete/${productId}`
     );
     console.log(res.data);
     return res.data.data;
@@ -52,24 +51,24 @@ export const getAllUsers = async () => {
     return null;
   }
 };
-export const addNewItemToCart = async (user_id, data) => {
+export const addNewItemToCart = async (user_id, productId) => {
   try {
-    const res = await axios.post(
-      `${baseURL}/api/products/addToCart/${user_id}`,
-      { ...data }
-    );
+    const res = await axios.post(`${baseURL}/api/product/addToCart`, {
+      userId: user_id,
+      productId,
+    });
     console.log(res.data);
-    return res.data.data;
+    return res.data.wishlist;
   } catch (error) {
-    console.log(`error in adding item to cart ${error}`);
+    console.log(`error in adding item to cart `, error);
   }
 };
 export const getAllCartItems = async (user_id) => {
   try {
-    const res = await axios.post(
-      `${baseURL}/api/products/getCartItems/${user_id}`
-    );
-    return res.data.data;
+    console.log("fetching the cart itnems ....");
+    const res = await axios.get(`${baseURL}/api/product/getCart/${user_id}`);
+    console.log("cart items", res.data);
+    return res.data.wishlist;
   } catch (error) {
     console.log(` error nin colllecting user data :${error}`);
   }
@@ -79,20 +78,35 @@ export const incrementItemQuant = async (user_id, productId, type) => {
   console.log(productId);
   console.log(type);
   try {
-    const res = axios.post(
-      `${baseURL}/api/products/updateCart/${user_id}`,
-      null,
-      { params: { productId: productId, type: type } }
-    );
+    const res = axios.post(`${baseURL}/api/product/addToCart`, {
+      productId: productId,
+      userId: user_id,
+    });
     return res.data.data;
   } catch (error) {
     return null;
   }
 };
-export const getAllOrders = async () => {
+export const decrementItemQuant = async (user_id, productId, type) => {
+  console.log(user_id);
+  console.log(productId);
+  console.log(type);
   try {
-    const res = await axios.get(`${baseURL}/api/products/orders`);
+    const res = axios.post(`${baseURL}/api/product/removeToCart`, {
+      productId: productId,
+      userId: user_id,
+    });
     return res.data.data;
+  } catch (error) {
+    return null;
+  }
+};
+export const getAllOrders = async (userID) => {
+  try {
+    console.log("fetching order");
+    const res = await axios.get(`${baseURL}/api/order/get/${userID}`);
+    console.log("your orders", res.data);
+    return res.data;
   } catch (error) {
     console.log(` error nin colllecting order data :${error}`);
   }
@@ -107,5 +121,21 @@ export const updateOrederSts = async (order_id, sts) => {
     return res.data.data;
   } catch (error) {
     console.log("error in updating item", error);
+  }
+};
+export const createOrder = async (userId, orderTotal, orderItems) => {
+  try {
+    console.log("checkout orders", orderItems);
+    const res = await axios.post(`${baseURL}/api/order/create`, {
+      userId,
+      orderTotal,
+      orderItems,
+    });
+    if (res) {
+      console.log("order added", res.data);
+      return res.data;
+    }
+  } catch (error) {
+    console.log("error in creating the order", error);
   }
 };

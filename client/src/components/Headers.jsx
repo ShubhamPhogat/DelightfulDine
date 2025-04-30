@@ -19,6 +19,7 @@ const Headers = () => {
   const navigate = useNavigate();
   const firebaseAuth = getAuth(app);
   const dispatch = useDispatch();
+
   const logOut = () => {
     console.log("clickerd");
     firebaseAuth
@@ -53,7 +54,7 @@ const Headers = () => {
               className={({ isActive }) =>
                 isActive ? isActiveStyles : isNotActiveStyles
               }
-              to={"/menu"}
+              to={"/search"}
             >
               Menu
             </NavLink>
@@ -99,7 +100,7 @@ const Headers = () => {
               >
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden hover:w-15 hover:h-15">
                   <motion.img
-                    src={user?.picture ? user.picture : Avatar}
+                    src={user ? user.photoURL : Avatar}
                     whileHover={{ scale: 1.25 }}
                     className=" w-full h-full object-cover  "
                     referrerPolicy="no-referrer"
@@ -112,7 +113,7 @@ const Headers = () => {
                     onMouseLeave={() => setIsMenu(false)}
                     className="px-6 py-4 bg-slate-100 flex flex-col justify-center shadow-md rounded-md absolute top-12 right-6 w-48 gap-4 hover:ease-in-out"
                   >
-                    {user?.user_id === process.env.ADMIN_ID && (
+                    {user?.user_id === "6810034b4b14ff8af3394152" && (
                       <Link
                         className="hover:text-red-500 text-xl hover:-translate-y-1 text-textColor"
                         to={"/dashboard/home"}

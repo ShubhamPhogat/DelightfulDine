@@ -1,15 +1,8 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { statuses } from "../utils/styles";
 import Spinner from "./Spinner";
 import { FaCloudUploadAlt } from "react-icons/fa";
-import {
-  getDownloadURL,
-  uploadBytesResumable,
-  ref,
-  deleteObject,
-} from "firebase/storage";
-import { storage } from "../config/firebase.config";
 import { motion } from "framer-motion";
 import {
   alertDanger,
@@ -17,7 +10,6 @@ import {
   alertNULL,
   alertSuccess,
 } from "../context/actions/alertActions";
-import { useDispatch, useSelector } from "react-redux";
 import { buttonClick } from "../animations";
 import { MdDelete } from "react-icons/md";
 import LinearBuffer from "./ProgressBar";
@@ -27,94 +19,109 @@ import { setAllProducts } from "../context/actions/productAction";
 const DBNewItems = () => {
   const [itemName, setItemName] = useState("");
   const [Price, setPrice] = useState("");
-  const [Progress, setProgress] = useState("");
-  const [imageDownloadUrl, setimageDownloadUrl] = useState(null);
+  const [Stock, setStock] = useState("");
+  const [Tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+
+  const [Progress, setProgress] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [category, setCategory] = useState("");
+
   const alert = useSelector((state) => state.alert);
   const dispatch = useDispatch();
 
-  const uploadImage = (e) => {
-    setIsLoading(true);
-    const imageFile = e.target.files[0];
-    const storageRef = ref(storage, `Images/${Date.now()}_${imageFile.name}`);
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
-    const uploadTask = uploadBytesResumable(storageRef, imageFile);
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        setProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-      },
-      (error) => {
-        dispatchEvent(alertDanger(`Error :${error}`));
-        setTimeout(() => {
-          dispatch(alertNULL());
-        }, 3000);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setimageDownloadUrl(downloadURL);
-          setIsLoading(false);
-          setProgress(null);
-          dispatch(alertSuccess("Images Uploded to cloud"));
-          setTimeout(() => {
-            dispatch(alertNULL());
-          }, 3000);
-        });
-      }
-    );
+  const deleteImage = () => {
+    setImageFile(null);
+    setPreviewUrl(null);
+    dispatch(alertInfo("Image removed"));
+    setTimeout(() => dispatch(alertNULL()), 3000);
   };
-  const deleteImageFromFirebase = () => {
+
+  const handleAddTag = () => {
+    const newTag = tagInput.trim();
+    if (newTag && !Tags.includes(newTag)) {
+      setTags([...Tags, newTag]);
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tag) => {
+    setTags(Tags.filter((t) => t !== tag));
+  };
+
+  const saveFileData = async () => {
+    if (!itemName || !Price || !category || !imageFile || !Stock) {
+      dispatch(alertDanger("Please fill in all fields and upload an image."));
+      setTimeout(() => dispatch(alertNULL()), 3000);
+      return;
+    }
+
     setIsLoading(true);
-    const deleteref = ref(storage, imageDownloadUrl);
-    deleteObject(deleteref).then(() => {
-      setimageDownloadUrl(null);
-      setIsLoading(false);
-      dispatch(alertInfo("image removed from the cloud"));
-      setTimeout(() => {
-        dispatch(alertNULL());
-      }, 3000);
-    });
-  };
-  const saveFileData = () => {
-    const data = {
-      product_name: itemName,
-      product_category: category,
-      product_price: Price,
-      imageURL: imageDownloadUrl,
-    };
-    console.log(data);
-    addNewProduct(data).then((res) => {
-      console.log(res);
+    setProgress(20);
+
+    const formData = new FormData();
+    formData.append("productName", itemName);
+    formData.append("productPrice", Price);
+    formData.append("productStock", Stock);
+    formData.append("productCategory", category);
+    formData.append("productTags", JSON.stringify(Tags));
+    formData.append("productImage", imageFile);
+
+    try {
+      setProgress(50);
+      await addNewProduct(formData);
+      setProgress(80);
+
       dispatch(alertSuccess("New item added"));
-      setTimeout(() => {
-        dispatch(alertNULL(""));
-      }, 2000);
-      setimageDownloadUrl(null);
+      setTimeout(() => dispatch(alertNULL()), 2000);
+
       setItemName("");
       setPrice("");
-      setCategory(null);
-    });
-    getAllProduct().then((data) => {
-      console.log(data);
+      setCategory("");
+      setStock("");
+      setTags([]);
+      setTagInput("");
+      setImageFile(null);
+      setPreviewUrl(null);
+
+      const data = await getAllProduct();
       dispatch(setAllProducts(data));
-    });
+    } catch (error) {
+      dispatch(alertDanger("Error saving data"));
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+      setProgress(null);
+    }
   };
+
   return (
-    <div className="flex flex-col items-center justify-center  gap-4  pt-6 px-24 w-full">
-      <div className=" border border-gray-300 rounded-md p-4 w-full flex flex-col items-center justify-center gap-4">
-        <InputValueFiekd
+    <div className="flex flex-col items-center justify-center gap-4 pt-6 px-24 w-full">
+      <div className="border border-gray-300 rounded-md p-4 w-full flex flex-col items-center justify-center gap-4">
+        <InputValueField
           type="text"
-          placeholder="item name here "
+          placeholder="Item name here"
           stateFunc={setItemName}
+          stateValue={itemName}
         />
+
         <div className="w-full flex items-center justify-around gap-3 flex-wrap">
           {statuses &&
-            statuses?.map((data) => (
+            statuses.map((data) => (
               <p
                 key={data.id}
                 onClick={() => setCategory(data.category)}
-                className={` px-4 py-3 rounded-md text-xl  font-semibold cursor-pointer hover:shadow-xl  border border-gray-200 backdrop-blur-md ${
+                className={`px-4 py-3 rounded-md text-xl font-semibold cursor-pointer hover:shadow-xl border border-gray-200 backdrop-blur-md ${
                   data.category === category
                     ? "bg-red-400 text-primary shadow-red-200"
                     : "bg-none"
@@ -124,71 +131,105 @@ const DBNewItems = () => {
               </p>
             ))}
         </div>
-        <InputValueFiekd
+
+        <InputValueField
           type="number"
-          placeholder={"items price here"}
+          placeholder="Item price here"
           stateFunc={setPrice}
           stateValue={Price}
         />
+
+        <InputValueField
+          type="number"
+          placeholder="Item stock here"
+          stateFunc={setStock}
+          stateValue={Stock}
+        />
+
+        {/* Tag Input */}
+        <div className="w-full flex items-center gap-3">
+          <input
+            type="text"
+            placeholder="Enter tag and click Add"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            className="flex-1 px-4 py-3 bg-lightOverlay shadow-md outline-none rounded-md border border-gray-200 focus:border-red-400"
+          />
+          <motion.button
+            {...buttonClick}
+            onClick={handleAddTag}
+            className="px-4 py-3 bg-red-400 text-white rounded-md shadow-md hover:bg-red-600"
+          >
+            Add
+          </motion.button>
+        </div>
+
+        {/* Tag List */}
+        <div className="w-full flex flex-wrap gap-2">
+          {Tags.map((tag, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full"
+            >
+              <span className="text-sm">{tag}</span>
+              <MdDelete
+                onClick={() => handleRemoveTag(tag)}
+                className="text-red-500 cursor-pointer"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Image Upload */}
         <div className="w-full bg-card h-300 rounded-md shadow-md border-gray-300 border-dotted cursor-pointer">
           {isLoading ? (
-            <>
-              <div className="w-full h-full flex item-center py-24 justify-center">
-                <Spinner />
-                {/* {Progress} */}
-                <LinearBuffer />
-              </div>
-            </>
+            <div className="w-full h-full flex items-center py-24 justify-center">
+              <Spinner />
+              <LinearBuffer />
+            </div>
           ) : (
             <>
-              {!imageDownloadUrl ? (
-                <>
-                  <label>
-                    <div className="flex flex-col items-center justify-center h-full w-full cursor-pointer">
-                      <div className="flex flex-col items-center justify-center cursor-pointer">
-                        <p className=" font-bold text-4xl">
-                          <FaCloudUploadAlt className="-rotate-0" />
-                        </p>
-                        <p className="text-lg text-textColor">
-                          CLick to upload an image
-                        </p>
-                      </div>
+              {!previewUrl ? (
+                <label>
+                  <div className="flex flex-col items-center justify-center h-full w-full cursor-pointer">
+                    <div className="flex flex-col items-center justify-center cursor-pointer">
+                      <p className="font-bold text-4xl">
+                        <FaCloudUploadAlt />
+                      </p>
+                      <p className="text-lg text-textColor">
+                        Click to upload an image
+                      </p>
                     </div>
-                    <input
-                      type="file"
-                      name="upload-image"
-                      accept="image/*"
-                      onChange={uploadImage}
-                      className="w-0 h-0"
-                    />
-                  </label>{" "}
-                </>
-              ) : (
-                <>
-                  <div className="relative w-full h-full overflow-hidden rounded-md">
-                    <motion.img
-                      whileHover={{ scale: 1.15 }}
-                      src={imageDownloadUrl}
-                      className="w-full h-full object-cover"
-                    />
-                    <motion.button
-                      {...buttonClick}
-                      type="button"
-                      className="absolute top-3 right-3 p-3 rounded-full
-                       bg-red-500 text-xl cursor-pointer outline-none
-                        hover:shadow-md duration-500 transition-all ease-in-out"
-                      onClick={() => {
-                        deleteImageFromFirebase(imageDownloadUrl);
-                      }}
-                    >
-                      <MdDelete className="-rotate-0" />
-                    </motion.button>
                   </div>
-                </>
+                  <input
+                    type="file"
+                    name="upload-image"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-0 h-0"
+                  />
+                </label>
+              ) : (
+                <div className="relative w-full h-full overflow-hidden rounded-md">
+                  <motion.img
+                    whileHover={{ scale: 1.15 }}
+                    src={previewUrl}
+                    className="w-full h-full object-cover"
+                  />
+                  <motion.button
+                    {...buttonClick}
+                    type="button"
+                    className="absolute top-3 right-3 p-3 rounded-full bg-red-500 text-xl cursor-pointer outline-none hover:shadow-md duration-500 transition-all ease-in-out"
+                    onClick={deleteImage}
+                  >
+                    <MdDelete />
+                  </motion.button>
+                </div>
               )}
             </>
           )}
         </div>
+
         <motion.button
           {...buttonClick}
           onClick={saveFileData}
@@ -200,22 +241,21 @@ const DBNewItems = () => {
     </div>
   );
 };
-export const InputValueFiekd = ({
+
+export const InputValueField = ({
   type,
   placeholder,
   stateValue,
   stateFunc,
 }) => {
   return (
-    <>
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 bg-lightOverlay shadow-md outline-none rounded-md border border-gray-200 focus:border-red-400 "
-        value={stateValue}
-        onChange={(e) => stateFunc(e.target.value)}
-      />
-    </>
+    <input
+      type={type}
+      placeholder={placeholder}
+      className="w-full px-4 py-3 bg-lightOverlay shadow-md outline-none rounded-md border border-gray-200 focus:border-red-400"
+      value={stateValue}
+      onChange={(e) => stateFunc(e.target.value)}
+    />
   );
 };
 

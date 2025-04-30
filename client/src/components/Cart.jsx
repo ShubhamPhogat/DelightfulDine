@@ -8,129 +8,157 @@ import {
   HiCurrencyRupee,
 } from "../assesets/icnons";
 import { useDispatch, useSelector } from "react-redux";
-import { baseURL, getAllCartItems, incrementItemQuant } from "../api";
+import {
+  addNewItemToCart,
+  addNewProduct,
+  baseURL,
+  decrementItemQuant,
+  getAllCartItems,
+  incrementItemQuant,
+} from "../api";
 import { setCartItems } from "../context/actions/cartAction";
 import { alertSuccess, alertNULL } from "../context/actions/alertActions";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
   const cart = useSelector((state) => state.cart);
-  const [Total, setTotal] = useState(0);
-  useEffect(() => {
-    let tot = 0;
-    if (cart) {
-      cart.map((data) => {
-        tot = tot + data.product_price * data.quantity;
-        setTotal(tot);
-      });
+  const [total, setTotal] = useState(0);
+
+  const fetchedCartItems = async () => {
+    const res = await getAllCartItems(user?._id);
+    if (res) {
+      dispatch(setCartItems(res));
+      calculateTotal(res);
     }
-  }, [cart]);
-  const closeCart = () => {
-    console.log("closing the cart");
-    dispatch(setCartOff());
   };
 
+  const calculateTotal = (items) => {
+    let tot = 0;
+    if (items && items.length > 0) {
+      items.forEach((data) => {
+        tot += data.productId.productPrice * data.quantity;
+      });
+      setTotal(tot);
+    } else {
+      setTotal(0);
+    }
+  };
+
+  useEffect(() => {
+    if (!cart) {
+      fetchedCartItems();
+    } else {
+      calculateTotal(cart);
+    }
+  }, [cart]);
+
+  const closeCart = () => {
+    dispatch(setCartOff());
+  };
+  const navigate = useNavigate();
   const handleCheckOut = () => {
-    const data = {
-      user: user,
-      cart: cart,
-      total: Total,
-    };
-    axios
-      .post(`${baseURL}/api/products/create-checkout-session`, { data })
-      .then((res) => {
-        console.log(res);
-        if (res.data.url) {
-          window.location.href = res.data.url;
-        }
-      })
-      .catch((err) => console.log(err));
+    navigate("/checkout");
   };
 
   return (
     <motion.div
       {...slideIn}
-      className="fixed z-50 top-0 right-0 w-300 md:w-508 bg-lightOverlay backdrop-blur-md shadow-md h-screen"
+      className="fixed z-[100] top-0 right-0 w-300 md:w-508 bg-lightOverlay backdrop-blur-md shadow-md h-screen flex flex-col"
     >
-      <div className="w-full flex items-center justify-between py-4 pb-12 px-6">
+      {/* Header */}
+      <div className="w-full flex items-center justify-between py-4 px-6 border-b border-gray-300">
         <motion.i
           {...buttonClick}
           className="cursor-pointer"
           onClick={closeCart}
         >
-          <BiChevronsRight className="text-[58px] text-textColor" />
+          <BiChevronsRight className="text-4xl text-textColor" />
         </motion.i>
-        <p className="text-2xl text-headingColor font-semibold "> Your Cart</p>
+        <p className="text-2xl text-headingColor font-semibold">Your Cart</p>
         <motion.i {...buttonClick} className="cursor-pointer">
-          <FcClearFilters className="text-[30px] text-textColor" />
+          <FcClearFilters className="text-2xl text-textColor" />
         </motion.i>
       </div>
-      <div className="flex flex-1 flex-col items-start justify-start rounded-t-3xl bg-zinc-800 h-full py-6 gap-3 relative">
-        {cart ? (
+
+      {/* Cart content */}
+      <div className="flex-1 flex flex-col bg-zinc-800 overflow-hidden">
+        {cart && cart.length > 0 ? (
           <>
-            <div className="flex flex-col w-full items-start justify-start gap-3 h=[65%] overflow-y-scroll scrollbar-none px-4 ">
-              {cart &&
-                cart.length > 0 &&
-                cart.map((items, index) => (
-                  <CartItemData key={index} index={index} data={items} />
+            {/* Cart items container - scrollable */}
+            <div className="flex-1 overflow-y-auto py-4 px-4 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200">
+              <div className="flex flex-col gap-3">
+                {cart.map((item, index) => (
+                  <CartItemData
+                    key={index}
+                    index={index}
+                    data={item.productId}
+                    quantity={item.quantity}
+                  />
                 ))}
+              </div>
             </div>
-            <div className="bg-zinc-800 rounded-t-[60px] w-full h-[35%] flex flex-col items-center justify-center px-4 py-2 mb-2 mt-3 gap-16">
-              <div className="w-full flex items-center justify-evenly">
-                <p className="text-3xl text-zinc-500 font-semibold">Total</p>
-                <p className="text-3xl text-orange-500 font-semibold flex items-center justify-center gap-1">
+
+            {/* Cart footer - fixed at bottom */}
+            <div className="bg-zinc-900 py-6 px-6">
+              <div className="w-full flex items-center justify-between mb-6">
+                <p className="text-2xl text-zinc-400 font-semibold">Total</p>
+                <p className="text-2xl text-orange-500 font-semibold flex items-center">
                   <HiCurrencyRupee className="text-primary" />
-                  {Total}
+                  {total}
                 </p>
               </div>
 
-              <motion.div
+              <motion.button
                 {...buttonClick}
-                className="bg-orange-400 pb-36   text-center cursor-pointer w-[70%] px-4 py-6 text-xl text-headingColor font-bold hover:bg-orange-600 drop-shadow-md rounded-2xl"
                 onClick={handleCheckOut}
+                className="bg-orange-400 w-full py-3 text-xl text-white font-bold hover:bg-orange-600 transition-all duration-200 rounded-xl"
               >
                 Check Out
-              </motion.div>
+              </motion.button>
             </div>
           </>
         ) : (
-          <>
+          <div className="flex-1 flex items-center justify-center">
             <h1 className="text-3xl text-primary font-bold">Empty cart</h1>
-          </>
+          </div>
         )}
       </div>
     </motion.div>
   );
 };
-export const CartItemData = ({ index, data }) => {
+
+export const CartItemData = ({ index, data, quantity }) => {
   const cart = useSelector((state) => state.cart);
   const user = useSelector((state) => state.user);
-
   const dispatch = useDispatch();
   const [itemTotal, setItemTotal] = useState(0);
-  useEffect(() => {
-    setItemTotal(data.product_price * data.quantity);
-  }, [itemTotal, cart]);
 
-  const decrementCart = (productId) => {
-    incrementItemQuant(user?.user_id, productId, "decrement").then((data) => {
-      dispatch(alertSuccess("item removed"));
+  useEffect(() => {
+    setItemTotal(data.productPrice * quantity);
+  }, [data.productPrice, quantity]);
+
+  const decrementCart = (userId, productId) => {
+    decrementItemQuant(userId, productId, "decrement").then(() => {
+      dispatch(alertSuccess("Item quantity decreased"));
       setTimeout(() => {
         dispatch(alertNULL());
       }, 2000);
-      getAllCartItems(user?.user_id).then((items) => {
+      getAllCartItems(user?._id).then((items) => {
         dispatch(setCartItems(items));
       });
     });
   };
-  const incrementCart = (productId) => {
-    dispatch(alertSuccess("item added"));
-    incrementItemQuant(user?.user_id, productId, "increment").then((data) => {
-      dispatch(alertSuccess("item added"));
-      dispatch(alertNULL());
-      getAllCartItems(user?.user_id).then((items) => {
+
+  const incrementCart = (userId, productId) => {
+    addNewItemToCart(userId, productId).then(() => {
+      dispatch(alertSuccess("Item quantity increased"));
+      setTimeout(() => {
+        dispatch(alertNULL());
+      }, 2000);
+      getAllCartItems(user?._id).then((items) => {
         dispatch(setCartItems(items));
       });
     });
@@ -140,40 +168,46 @@ export const CartItemData = ({ index, data }) => {
     <motion.div
       key={index}
       {...staggerFadeInOut(index)}
-      className=" w-full flex items-center justify-center bg-zinc-700 rounded-md drop-shadow-md px-4 gap-4"
+      className="w-full flex items-center bg-zinc-700 rounded-lg p-2 gap-2"
     >
       <img
-        src={data?.imageURL}
-        className="w-24 min-w-[94px] h-24 object-contain"
+        src={data?.productImage}
+        alt={data?.productName}
+        className="w-20 h-20 object-contain rounded-md"
       />
-      <div className="flex items-center justify-start gap-1 w-full">
-        <p className="text-lg primary font-semibold text-primary">
-          {data?.product_name}
-          <span className="text-sm block capitalize text-gray-400">
-            {data?.product_category}
-          </span>
+
+      <div className="flex flex-col flex-1">
+        <p className="text-lg font-semibold text-primary">
+          {data?.productName}
         </p>
-        <p className="text-sm font-semibold items-center flex justify-center text-red-400 gap-1 ml-auto">
-          {" "}
-          <HiCurrencyRupee className="text-red-400" /> {itemTotal}{" "}
+        <span className="text-sm capitalize text-gray-400">
+          {data?.productCategory}
+        </span>
+        <p className="text-sm font-semibold text-red-400 mt-1 flex items-center">
+          <HiCurrencyRupee className="text-red-400" /> {itemTotal}
         </p>
       </div>
-      <div className="ml-auto flex item-center justify-center gap-3">
-        <motion.div
+
+      <div className="flex items-center gap-2">
+        <motion.button
           {...buttonClick}
-          onClick={() => decrementCart(data?.productId)}
-          className="w-8 h-8 flex items-center justify-center rounded-md drop-shadow-md bg-zinc-900 cursor-pointer"
+          onClick={() => decrementCart(user?._id, data?._id)}
+          className="w-8 h-8 flex items-center justify-center rounded-md bg-zinc-900 text-primary"
         >
-          <p className="text-xl font-semibold text-primary">--</p>
-        </motion.div>
-        <p className="text-lg text-primary font-semibold  ">{data?.quantity}</p>
-        <motion.div
+          -
+        </motion.button>
+
+        <p className="text-lg text-primary font-semibold w-6 text-center">
+          {quantity}
+        </p>
+
+        <motion.button
           {...buttonClick}
-          className="w-8 h-8 flex items-center justify-center rounded-md drop-shadow-md bg-zinc-900 cursor-pointer"
-          onClick={() => incrementCart(data?.productId)}
+          onClick={() => incrementCart(user?._id, data?._id)}
+          className="w-8 h-8 flex items-center justify-center rounded-md bg-zinc-900 text-primary"
         >
-          <p className="text-xl font-semibold text-primary">+</p>
-        </motion.div>
+          +
+        </motion.button>
       </div>
     </motion.div>
   );

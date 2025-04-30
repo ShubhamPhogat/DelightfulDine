@@ -16,6 +16,8 @@ import DBusers from "./components/DBusers";
 import { setCartItems } from "./context/actions/cartAction";
 import CheckOut from "./components/CheckOut";
 import UserOrders from "./components/UserOrders";
+import ProductSearchPage from "./container/ProductSearchPage";
+import Checkout from "./container/Checkout";
 
 function App() {
   const firebaseAuth = getAuth(app);
@@ -62,6 +64,8 @@ function App() {
         <Route path="/dashboard/*" element={<Dashboard />} />
         <Route path="/checkout_success" element={<CheckOut />} />
         <Route path="/users_orders" element={<UserOrders />} />
+        <Route path="/search" element={<ProductSearchPage />} />
+        <Route path="/checkout" element={<Checkout />} />
       </Routes>
       {alert?.type && <Alert type={alert?.type} message={alert?.message} />}
     </div>
