@@ -106,16 +106,13 @@ const Login = () => {
       dispatch(alertInfo("Rquired fields should no be empty"));
     } else {
       if (userPassword === userConfirmPassword) {
-        const response = await axios.post(
-          `http://56.228.1.54:8000/api/users/register`,
-          {
-            userName,
-            password: userPassword,
-            email: useremail,
-            firstName,
-            phone,
-          }
-        );
+        const response = await axios.post(`/api/users/register`, {
+          userName,
+          password: userPassword,
+          email: useremail,
+          firstName,
+          phone,
+        });
         if (response) {
           dispatch(
             alertSuccess(
@@ -131,10 +128,10 @@ const Login = () => {
   const signInWithEmailPass = async () => {
     if (useremail !== "" && userPassword !== "") {
       try {
-        const response = await axios.post(
-          `http://56.228.1.54:8000/api/users/login`,
-          { email: useremail, password: userPassword }
-        );
+        const response = await axios.post(`/api/users/login`, {
+          email: useremail,
+          password: userPassword,
+        });
         if (response) {
           console.log("his is user", response.data.data.validateUser);
           dispatch(setUserDetails(response.data.data.validateUser));

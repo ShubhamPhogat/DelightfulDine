@@ -1,8 +1,8 @@
 import axios from "axios";
-export const baseURL = "http://56.228.1.54:8000";
+export const baseURL = "";
 export const validateUserJwtToken = async (token) => {
   try {
-    const res = await axios.get(`${baseURL}/api/user/jwtVerification`, {
+    const res = await axios.get(`/api/user/jwtVerification`, {
       headers: { Authorization: "Bearer " + token },
     });
     return res.data.data;
@@ -13,7 +13,7 @@ export const validateUserJwtToken = async (token) => {
 
 export const addNewProduct = async (data) => {
   try {
-    const res = await axios.post(`${baseURL}/api/product/create`, data);
+    const res = await axios.post(`/api/product/create`, data);
     console.log(res.data);
     return res.data.data;
   } catch (error) {
@@ -24,7 +24,7 @@ export const addNewProduct = async (data) => {
 
 export const getAllProduct = async () => {
   try {
-    const res = await axios.get(`${baseURL}/api/product/all`);
+    const res = await axios.get(`/api/product/all`);
     console.log("products fetched", res.data.allProducts);
     return res.data.allProducts;
   } catch (error) {
@@ -33,9 +33,7 @@ export const getAllProduct = async () => {
 };
 export const deleteAProduct = async (productId) => {
   try {
-    const res = await axios.delete(
-      `${baseURL}/api/product/delete/${productId}`
-    );
+    const res = await axios.delete(`/api/product/delete/${productId}`);
     console.log(res.data);
     return res.data.data;
   } catch (error) {
@@ -44,7 +42,7 @@ export const deleteAProduct = async (productId) => {
 };
 export const getAllUsers = async () => {
   try {
-    const res = await axios.get(`${baseURL}/api/user/all`);
+    const res = await axios.get(`/api/user/all`);
     // console.log(res.data.data);
     return res.data.data;
   } catch (err) {
@@ -53,7 +51,7 @@ export const getAllUsers = async () => {
 };
 export const addNewItemToCart = async (user_id, productId) => {
   try {
-    const res = await axios.post(`${baseURL}/api/product/addToCart`, {
+    const res = await axios.post(`/api/product/addToCart`, {
       userId: user_id,
       productId,
     });
@@ -66,7 +64,7 @@ export const addNewItemToCart = async (user_id, productId) => {
 export const getAllCartItems = async (user_id) => {
   try {
     console.log("fetching the cart itnems ....");
-    const res = await axios.get(`${baseURL}/api/product/getCart/${user_id}`);
+    const res = await axios.get(`/api/product/getCart/${user_id}`);
     console.log("cart items", res.data);
     return res.data.wishlist;
   } catch (error) {
@@ -78,7 +76,7 @@ export const incrementItemQuant = async (user_id, productId, type) => {
   console.log(productId);
   console.log(type);
   try {
-    const res = axios.post(`${baseURL}/api/product/addToCart`, {
+    const res = axios.post(`/api/product/addToCart`, {
       productId: productId,
       userId: user_id,
     });
@@ -92,7 +90,7 @@ export const decrementItemQuant = async (user_id, productId, type) => {
   console.log(productId);
   console.log(type);
   try {
-    const res = axios.post(`${baseURL}/api/product/removeToCart`, {
+    const res = axios.post(`/api/product/removeToCart`, {
       productId: productId,
       userId: user_id,
     });
@@ -104,7 +102,7 @@ export const decrementItemQuant = async (user_id, productId, type) => {
 export const getAllOrders = async (userID) => {
   try {
     console.log("fetching order");
-    const res = await axios.get(`${baseURL}/api/order/get/${userID}`);
+    const res = await axios.get(`/api/order/get/${userID}`);
     console.log("your orders", res.data);
     return res.data;
   } catch (error) {
@@ -114,7 +112,7 @@ export const getAllOrders = async (userID) => {
 export const updateOrederSts = async (order_id, sts) => {
   try {
     const res = await axios.post(
-      `${baseURL}/api/products/updateOrder/${order_id}`,
+      `/api/products/updateOrder/${order_id}`,
       null,
       { params: { sts: sts } }
     );
@@ -126,7 +124,7 @@ export const updateOrederSts = async (order_id, sts) => {
 export const createOrder = async (userId, orderTotal, orderItems) => {
   try {
     console.log("checkout orders", orderItems);
-    const res = await axios.post(`${baseURL}/api/order/create`, {
+    const res = await axios.post(`/api/order/create`, {
       userId,
       orderTotal,
       orderItems,
