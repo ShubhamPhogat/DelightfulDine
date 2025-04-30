@@ -107,7 +107,7 @@ const Login = () => {
     } else {
       if (userPassword === userConfirmPassword) {
         const response = await axios.post(
-          `http://localhost:8000/api/users/register`,
+          `http://56.228.1.54:8000/api/users/register`,
           {
             userName,
             password: userPassword,
@@ -132,7 +132,7 @@ const Login = () => {
     if (useremail !== "" && userPassword !== "") {
       try {
         const response = await axios.post(
-          `http://localhost:8000/api/users/login`,
+          `http://56.228.1.54:8000/api/users/login`,
           { email: useremail, password: userPassword }
         );
         if (response) {

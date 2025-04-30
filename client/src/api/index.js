@@ -1,5 +1,5 @@
 import axios from "axios";
-export const baseURL = "https://delight-full-dine-backend-tuum.vercel.app";
+export const baseURL = "http://56.228.1.54:8000";
 export const validateUserJwtToken = async (token) => {
   try {
     const res = await axios.get(`${baseURL}/api/user/jwtVerification`, {

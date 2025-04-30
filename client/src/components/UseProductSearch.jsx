@@ -26,7 +26,7 @@ const UseProductSearch = (debounceTime = 200) => {
 
         // Replace with your actual API endpoint
         axios
-          .get(`http://localhost:8000/api/product/search/${searchTerm}`)
+          .get(`http://56.228.1.54:8000/api/product/search/${searchTerm}`)
           .then((response) => {
             console.log(response);
             setSearchResults(response.data);
@@ -52,7 +52,7 @@ const UseProductSearch = (debounceTime = 200) => {
       // Replace with your actual API endpoint
       axios
         .get(
-          `http://localhost:8000/api/product/matching/${selectedProduct._id}`
+          `http://56.228.1.54:8000/api/product/matching/${selectedProduct._id}`
         )
         .then((response) => {
           console.log("matching products", response);
@@ -71,7 +71,7 @@ const UseProductSearch = (debounceTime = 200) => {
 
     // Replace with your actual API endpoint
     axios
-      .get(`http://localhost:8000/api/product/findById/${product._id}`)
+      .get(`http://56.228.1.54:8000/api/product/findById/${product._id}`)
       .then((response) => {
         console.log(response);
         setSelectedProduct(response.data);
