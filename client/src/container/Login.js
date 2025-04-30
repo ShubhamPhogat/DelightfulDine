@@ -268,17 +268,6 @@ const Login = () => {
             {/* <div className="w-24 h-[1px] rounded-md bg-white "></div> */}
           </div>
         </div>
-        <motion.div
-          onClick={signInWithGoogle}
-          {...buttonClick}
-          className="flex items-center justify-center px-20 py-2 my-4 bg-white backdrop-blur-md cursor-pointer rounded-3xl gap-4"
-        >
-          <FcGoogle className="text-3xl" />
-          <p className=" capitalize text-base text-headingColor">
-            {" "}
-            sign in with Google
-          </p>
-        </motion.div>
       </div>
     </div>
   );
